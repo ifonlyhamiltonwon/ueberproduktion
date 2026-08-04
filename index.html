@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ueberproduktion – Grosshandel direkt vom Hof</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Source+Sans+3:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #3B6D11;
+      --green-light: #EAF3DE;
+      --green-mid: #639922;
+      --green-dark: #27500A;
+      --green-accent: #C0DD97;
+      --amber: #BA7517;
+      --amber-light: #FAEEDA;
+      --amber-dark: #854F0B;
+      --text: #1a1a1a;
+      --text2: #555;
+      --bg: #fff;
+      --bg2: #f7f7f5;
+      --border: rgba(0,0,0,0.12);
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #e8e8e2;
+        --text2: #999;
+        --bg: #1c1c1a;
+        --bg2: #252522;
+        --border: rgba(255,255,255,0.12);
+        --green-light: #1a2e0a;
+        --amber-light: #2a1f0a;
+      }
+    }
+    body { font-family: 'Source Sans 3', sans-serif; color: var(--text); background: var(--bg); min-height: 100vh; }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 3.5rem 2rem 3rem;
+      text-align: center;
+      border-bottom: 1px solid #C0DD97;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+    }
+    .hero-bg svg { width: 100%; height: 100%; display: block; }
+    .hero-bg-fade {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(20,10,5,0.15) 0%, rgba(20,10,5,0.45) 100%);
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(4px);
+      color: #fff3d6;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 20px;
+      margin-bottom: 1.1rem;
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 5vw, 52px);
+      font-weight: 600;
+      color: #fff8ea;
+      text-shadow: 0 2px 18px rgba(0,0,0,0.35);
+      line-height: 1.15;
+      margin-bottom: .8rem;
+    }
+    .hero p {
+      font-size: 16px;
+      color: #fdeedd;
+      text-shadow: 0 1px 10px rgba(0,0,0,0.3);
+      max-width: 560px;
+      margin: 0 auto 1.75rem;
+      line-height: 1.65;
+      font-weight: 300;
+    }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: #3B6D11; color: #EAF3DE;
+      border: none; padding: 11px 28px;
+      border-radius: var(--radius); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: background .2s;
+    }
+    .btn-primary:hover { background: #27500A; }
+    .btn-outline {
+      background: rgba(255,255,255,0.12); color: #fff8ea;
+      border: 1.5px solid #fff8ea; padding: 11px 28px;
+      border-radius: var(--radius); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all .2s; backdrop-filter: blur(4px);
+    }
+    .btn-outline:hover { background: #fff8ea; color: #27500A; }
+
+    /* SEARCH BAR */
+    .search-bar {
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+    .search-bar input {
+      flex: 1; min-width: 180px;
+      padding: 9px 14px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      background: var(--bg2); color: var(--text);
+      font-family: inherit;
+    }
+    .search-bar button {
+      padding: 9px 20px;
+      background: #3B6D11; color: #EAF3DE;
+      border: none; border-radius: var(--radius);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; white-space: nowrap; font-family: inherit;
+    }
+    .search-bar button:hover { background: #27500A; }
+
+    /* LAYOUT */
+    .main { display: grid; grid-template-columns: 240px 1fr; min-height: 500px; }
+
+    /* SIDEBAR */
+    .sidebar {
+      border-right: 0.5px solid var(--border);
+      padding: 1.5rem 1.25rem;
+      background: var(--bg2);
+    }
+    .sidebar h3 {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--text2); margin-bottom: .75rem; margin-top: 1.25rem;
+    }
+    .sidebar h3:first-child { margin-top: 0; }
+    .cat-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 10px; border-radius: 7px;
+      cursor: pointer; font-size: 14px; color: var(--text);
+      margin-bottom: 2px; transition: background .15s;
+    }
+    .cat-item:hover { background: var(--green-light); color: var(--green); }
+    .cat-item.active { background: var(--green-light); color: var(--green); font-weight: 500; }
+    .cat-count {
+      font-size: 11px; background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: 10px; padding: 1px 7px; color: var(--text2);
+    }
+    .cat-item.active .cat-count { background: #3B6D11; color: #EAF3DE; border-color: #3B6D11; }
+    .filter-select, .filter-input {
+      width: 100%; padding: 7px 10px;
+      border: 0.5px solid var(--border); border-radius: 7px;
+      font-size: 13px; background: var(--bg); color: var(--text);
+      margin-bottom: .5rem; font-family: inherit;
+    }
+    .filter-input.input-error {
+      border-color: #c0392b;
+      background: #fdecea;
+      color: #c0392b;
+    }
+    @media (prefers-color-scheme: dark) {
+      .filter-input.input-error { background: #3a1a17; color: #ff8a80; }
+    }
+    .filter-range { padding: 4px 0; border: none; background: transparent; cursor: pointer; width: 100%; }
+    .range-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+    /* CONTENT */
+    .content { padding: 1.5rem; }
+    .content-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px;
+    }
+    .content-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 600; color: var(--text);
+    }
+    .sort-select {
+      padding: 6px 10px; border: 0.5px solid var(--border);
+      border-radius: 7px; font-size: 13px;
+      background: var(--bg2); color: var(--text); font-family: inherit;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--bg); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+      cursor: pointer; transition: border-color .2s, transform .2s;
+    }
+    .card:hover { border-color: #97C459; transform: translateY(-2px); }
+    .card-img {
+      height: 130px; display: flex; align-items: center; justify-content: center;
+      font-size: 52px; background: var(--green-light); position: relative;
+    }
+    .card-badge {
+      position: absolute; top: 8px; left: 8px;
+      background: #BA7517; color: #FAEEDA;
+      font-size: 10px; font-weight: 500;
+      padding: 2px 8px; border-radius: 10px;
+    }
+    .card-badge.bio { background: #3B6D11; color: #C0DD97; }
+    .card-body { padding: 12px; }
+    .card-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+    .card-farm { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .card-price { font-size: 16px; font-weight: 600; color: #3B6D11; }
+    .card-price span { font-size: 11px; font-weight: 400; color: var(--text2); }
+    .card-loc { font-size: 11px; color: var(--text2); }
+    .card-qty-row { font-size: 11px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
+    .card-qty-row b { color: var(--text); }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .tag {
+      font-size: 10px; background: var(--green-light);
+      color: #3B6D11; padding: 2px 8px; border-radius: 10px;
+    }
+    .tag.amber { background: var(--amber-light); color: var(--amber-dark); }
+    .empty-state { color: var(--text2); font-size: 14px; grid-column: 1 / -1; padding: 2rem 0; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: none; align-items: center; justify-content: center;
+      z-index: 100; padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg); border-radius: 16px;
+      padding: 2rem; max-width: 480px; width: 100%;
+      max-height: 90vh; overflow-y: auto; position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: var(--bg2); border: none; border-radius: 50%;
+      width: 30px; height: 30px; cursor: pointer;
+      font-size: 16px; display: flex; align-items: center; justify-content: center;
+      color: var(--text2); line-height: 1;
+    }
+    .modal-close:hover { background: var(--border); }
+    .modal h2 { font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: .3rem; }
+    .modal-meta { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem; }
+    .modal-section { margin-bottom: 1.25rem; }
+    .modal-section label {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: .09em; color: var(--text2);
+      display: block; margin-bottom: .4rem; font-weight: 500;
+    }
+    .modal-section p { font-size: 14px; line-height: 1.65; color: var(--text); }
+    .modal-price-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--green-light); border-radius: 10px;
+      padding: 12px 16px; margin-bottom: .75rem; flex-wrap: wrap; gap: 6px;
+    }
+    .modal-price { font-size: 24px; font-weight: 600; color: #3B6D11; }
+    .modal-price span { font-size: 13px; font-weight: 400; color: #3B6D11; }
+    .modal-avail { font-size: 13px; color: #3B6D11; font-weight: 500; text-align: right; }
+    .modal-order-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--amber-light); border-radius: 10px;
+      padding: 10px 16px; margin-bottom: 1.25rem;
+      font-size: 13px; color: var(--amber-dark); font-weight: 500; flex-wrap: wrap; gap: 6px;
+    }
+    .btn-contact {
+      width: 100%; padding: 13px;
+      background: #3B6D11; color: #EAF3DE;
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 500;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-contact:hover { background: #27500A; }
+    .modal-owner-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-modal-edit, .btn-modal-delete {
+      flex: 1; padding: 10px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      font-family: inherit; border: 1px solid var(--border);
+      background: var(--bg2); color: var(--text);
+    }
+    .btn-modal-edit:hover { background: var(--green-light); color: #3B6D11; border-color: #97C459; }
+    .btn-modal-delete { color: #c0392b; border-color: #e0b4ae; }
+    .btn-modal-delete:hover { background: #fdecea; }
+
+    /* ANGEBOT FORM */
+    .form-toggle {
+      text-align: center; padding: 1.5rem 2rem;
+      border-top: 0.5px solid var(--border);
+      background: var(--amber-light);
+    }
+    .form-toggle p { font-size: 15px; color: var(--amber); margin-bottom: .85rem; font-weight: 500; }
+    .offer-form {
+      background: var(--bg2);
+      border-top: 0.5px solid var(--border);
+      padding: 2rem; display: none;
+    }
+    .offer-form.open { display: block; }
+    .offer-form h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; margin-bottom: 1.25rem; color: var(--text);
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-field label {
+      font-size: 12px; color: var(--text2);
+      display: block; margin-bottom: 5px;
+    }
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%; padding: 9px 12px;
+      border: 0.5px solid var(--border); border-radius: var(--radius);
+      font-size: 13px; background: var(--bg); color: var(--text);
+      font-family: inherit;
+    }
+    .form-field textarea { min-height: 80px; resize: vertical; }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+      outline: none; border-color: #639922;
+    }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    .checkbox-group label {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; color: var(--text); font-weight: 400;
+      background: var(--bg); border: 0.5px solid var(--border);
+      padding: 6px 10px; border-radius: var(--radius); cursor: pointer;
+    }
+    .checkbox-group input { width: auto; }
+    .submit-btn {
+      background: #BA7517; color: #FAEEDA;
+      border: none; padding: 12px 30px;
+      border-radius: var(--radius); font-size: 14px; font-weight: 500;
+      cursor: pointer; font-family: inherit; margin-top: .5rem;
+    }
+    .submit-btn:hover { background: #854F0B; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: #27500A; color: #C0DD97;
+      padding: 12px 22px; border-radius: 10px;
+      font-size: 14px; font-weight: 500;
+      z-index: 200; opacity: 0;
+      transform: translateY(20px);
+      transition: all .3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    .farms-map-panel {
+      position: fixed; top: 16px; left: 16px; z-index: 140;
+      width: 260px; background: var(--bg);
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 2px 14px rgba(0,0,0,.3);
+      border: 0.5px solid var(--border);
+    }
+    .farms-map-header {
+      font-size: 12px; font-weight: 500; color: var(--text);
+      background: var(--bg2); padding: 7px 10px;
+      border-bottom: 0.5px solid var(--border);
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+      user-select: none;
+    }
+    #farmsMapToggleIcon { transition: transform .2s; font-size: 11px; color: var(--text2); }
+    .farms-map-panel.collapsed #farmsMapToggleIcon { transform: rotate(-90deg); }
+    .farms-map-panel.collapsed #farmsMap { display: none; }
+    #farmsMap { width: 100%; height: 170px; }
+    .leaflet-popup-content { font-family: 'Source Sans 3', sans-serif; font-size: 12.5px; }
+    @media (max-width: 700px) {
+      .farms-map-panel { width: 160px; }
+      #farmsMap { height: 120px; }
+      .farms-map-header { font-size: 11px; }
+    }
+
+    .orders-fab {
+      position: fixed; top: 16px; right: 16px; z-index: 150;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: #3B6D11; color: #EAF3DE; border: none;
+      font-size: 22px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,.25); transition: background .2s;
+    }
+    .orders-fab:hover { background: #27500A; }
+    .info-fab {
+      position: fixed; top: 72px; right: 16px; z-index: 150;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: #BA7517; color: #FAEEDA; border: none;
+      font-size: 20px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,.25); transition: background .2s;
+    }
+    .info-fab:hover { background: #854F0B; }
+    .orders-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: #BA7517; color: #FAEEDA; font-size: 11px; font-weight: 600;
+      min-width: 18px; height: 18px; border-radius: 9px;
+      display: none; align-items: center; justify-content: center; padding: 0 4px;
+    }
+    .order-item {
+      border: 0.5px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 10px;
+    }
+    .order-item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .order-item-title { font-weight: 500; font-size: 14px; }
+    .order-item-farm { font-size: 12px; color: var(--text2); }
+    .order-item-time { font-size: 11px; color: var(--text2); white-space: nowrap; }
+    .order-item-details { font-size: 13px; margin-top: 8px; line-height: 1.7; }
+
+    /* FOOTER */
+    footer {
+      background: #27500A; color: #C0DD97;
+      text-align: center; padding: 2rem;
+      font-size: 13px; margin-top: 2rem;
+    }
+    footer a { color: #97C459; text-decoration: none; }
+
+    /* RESPONSIVE */
+    @media (max-width: 700px) {
+      .main { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 0.5px solid var(--border); }
+      .form-grid { grid-template-columns: 1fr; }
+      .search-bar { padding: 1rem; }
+      .content { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HÖFE-KARTE -->
+<div class="farms-map-panel" id="farmsMapPanel">
+  <div class="farms-map-header" onclick="toggleFarmsMap()">
+    <span>📍 Höfe auf der Karte</span>
+    <span id="farmsMapToggleIcon">▾</span>
+  </div>
+  <div id="farmsMap"></div>
+</div>
+
+<!-- BESTELLUNGEN -->
+<button class="orders-fab" onclick="openOrdersModal()" title="Meine Bestellungen">
+  📦<span class="orders-badge" id="ordersBadge">0</span>
+</button>
+
+<button class="info-fab" onclick="openInfoModal()" title="Über diese Plattform">ℹ️</button>
+
+<div class="modal-overlay" id="infoModal" onclick="if(event.target===this)closeInfoModal()">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeInfoModal()">✕</button>
+    <h2>Warum Ueberproduktion?</h2>
+    <p class="modal-meta" style="margin-bottom:1rem">Hintergrund und Ziel dieser Plattform</p>
+    <div class="modal-section">
+      <label>Das Problem</label>
+      <p>Jedes Jahr bleiben grosse Mengen einwandfreier Lebensmittel auf den Höfen liegen – weil die Ernte grösser ausfällt als geplant, ein Grossabnehmer kurzfristig absagt oder die Ware nicht mehr in bestehende Lieferverträge passt. Für einzelne Betriebe lohnt sich der Vertrieb solcher Restmengen über klassische Kanäle oft nicht.</p>
+    </div>
+    <div class="modal-section">
+      <label>Unser Ansatz</label>
+      <p>Ueberproduktion bringt Landwirte mit gewerblichen Abnehmern – Grossküchen, Verarbeitungsbetrieben, Handel – direkt zusammen. Ohne Zwischenhandel, zu fairen Grosshandelspreisen, mit transparenter Mindestabnahmemenge und verfügbarer Gesamtmenge.</p>
+    </div>
+    <div class="modal-section">
+      <label>Der Nutzen</label>
+      <p>Landwirte erzielen einen Erlös für Ware, die sonst verloren ginge. Abnehmer erhalten regionale Produkte in grossen Mengen zu attraktiven Konditionen. Und weniger Lebensmittel landen unnötig auf dem Kompost oder im Müll.</p>
+    </div>
+    <div class="modal-section">
+      <label>Wer steckt dahinter</label>
+      <p>Ein unabhängiges, gemeinnützig gedachtes Projekt zur Reduktion von Nahrungsmittelverschwendung in der Landwirtschaft. Die Plattform erhebt keine Vermittlungsgebühren.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ordersModal" onclick="if(event.target===this)closeOrdersModal()">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeOrdersModal()">✕</button>
+    <h2>Meine Bestellungen</h2>
+    <p class="modal-meta" style="margin-bottom:1rem">Übersicht deiner abgegebenen Bestellanfragen</p>
+    <div id="ordersList"></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <svg viewBox="0 0 1600 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3d1f4a"/>
+            <stop offset="28%" stop-color="#8c3a5c"/>
+            <stop offset="52%" stop-color="#e2624f"/>
+            <stop offset="72%" stop-color="#f6a341"/>
+            <stop offset="100%" stop-color="#ffd873"/>
+          </linearGradient>
+          <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fff3c4" stop-opacity="0.95"/>
+            <stop offset="45%" stop-color="#ffd166" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#ffd166" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="1600" height="500" fill="url(#skyGrad)"/>
+        <circle cx="800" cy="345" r="170" fill="url(#sunGlow)"/>
+        <circle cx="800" cy="345" r="78" fill="#fff0c2"/>
+        <path d="M 300,120 q 14,-8 28,0" stroke="#3d1f2a" stroke-width="3" fill="none" opacity="0.5" stroke-linecap="round"/>
+        <path d="M 360,95 q 14,-8 28,0" stroke="#3d1f2a" stroke-width="3" fill="none" opacity="0.4" stroke-linecap="round"/>
+        <path d="M 1180,80 q 14,-8 28,0" stroke="#3d1f2a" stroke-width="3" fill="none" opacity="0.45" stroke-linecap="round"/>
+        <path d="M -20,500 L -20,291.2 L -20.0,291.2 L -6.0,282.5 L 8.0,307.5 L 22.0,278.6 L 36.0,301.8 L 50.0,293.3 L 64.0,277.9 L 78.0,300.4 L 92.0,276.9 L 106.0,296.7 L 120.0,278.5 L 134.0,279.5 L 148.0,296.2 L 162.0,316.3 L 176.0,281.2 L 190.0,286.2 L 204.0,306.4 L 218.0,322.4 L 232.0,303.9 L 246.0,294.8 L 260.0,323.8 L 274.0,277.3 L 288.0,317.9 L 302.0,289.5 L 316.0,282.2 L 330.0,280.9 L 344.0,290.4 L 358.0,315.8 L 372.0,284.0 L 386.0,304.1 L 400.0,306.9 L 414.0,293.6 L 428.0,302.4 L 442.0,278.1 L 456.0,278.0 L 470.0,285.3 L 484.0,309.0 L 498.0,296.4 L 512.0,290.7 L 526.0,304.3 L 540.0,297.7 L 554.0,290.0 L 568.0,314.7 L 582.0,309.9 L 596.0,287.2 L 610.0,303.7 L 624.0,301.3 L 638.0,318.8 L 652.0,311.5 L 666.0,289.4 L 680.0,324.0 L 694.0,280.9 L 708.0,295.9 L 722.0,312.9 L 736.0,282.6 L 750.0,299.4 L 764.0,277.0 L 778.0,308.4 L 792.0,313.2 L 806.0,303.7 L 820.0,318.8 L 834.0,290.7 L 848.0,309.8 L 862.0,304.7 L 876.0,304.0 L 890.0,297.8 L 904.0,317.0 L 918.0,322.2 L 932.0,298.7 L 946.0,308.2 L 960.0,278.0 L 974.0,310.1 L 988.0,307.4 L 1002.0,324.7 L 1016.0,316.1 L 1030.0,289.2 L 1044.0,294.3 L 1058.0,308.4 L 1072.0,276.1 L 1086.0,298.1 L 1100.0,283.4 L 1114.0,280.9 L 1128.0,277.9 L 1142.0,313.4 L 1156.0,281.5 L 1170.0,287.4 L 1184.0,294.5 L 1198.0,318.6 L 1212.0,279.0 L 1226.0,297.5 L 1240.0,302.5 L 1254.0,319.2 L 1268.0,316.0 L 1282.0,318.2 L 1296.0,288.9 L 1310.0,295.8 L 1324.0,292.9 L 1338.0,319.2 L 1352.0,322.9 L 1366.0,282.5 L 1380.0,283.8 L 1394.0,286.6 L 1408.0,286.7 L 1422.0,299.2 L 1436.0,304.5 L 1450.0,288.1 L 1464.0,275.2 L 1478.0,295.9 L 1492.0,293.5 L 1506.0,303.3 L 1520.0,322.7 L 1534.0,309.5 L 1548.0,300.8 L 1562.0,305.9 L 1576.0,308.8 L 1590.0,277.7 L 1604.0,320.0 L 1618.0,314.0 L 1620,500 Z" fill="#c97a37" opacity="0.88"/>
+        <path d="M -20,500 L -20,265.0 L -20.0,265.0 L -10.0,258.8 L 0.0,226.4 L 10.0,226.9 L 20.0,203.3 L 30.0,245.7 L 40.0,200.0 L 50.0,200.4 L 60.0,211.7 L 70.0,208.0 L 80.0,222.2 L 90.0,199.2 L 100.0,195.0 L 110.0,207.1 L 120.0,203.1 L 130.0,224.1 L 140.0,197.0 L 150.0,264.9 L 160.0,244.1 L 170.0,206.9 L 180.0,215.2 L 190.0,222.8 L 200.0,224.1 L 210.0,204.8 L 220.0,262.9 L 230.0,274.4 L 240.0,232.3 L 250.0,233.7 L 260.0,201.9 L 270.0,203.2 L 280.0,222.4 L 290.0,216.2 L 300.0,261.3 L 310.0,207.9 L 320.0,196.8 L 330.0,271.1 L 340.0,237.3 L 350.0,206.7 L 360.0,238.5 L 370.0,197.2 L 380.0,237.2 L 390.0,273.3 L 400.0,264.1 L 410.0,250.7 L 420.0,215.9 L 430.0,224.3 L 440.0,208.4 L 450.0,256.8 L 460.0,237.6 L 470.0,257.3 L 480.0,221.4 L 490.0,212.8 L 500.0,259.9 L 510.0,273.8 L 520.0,263.2 L 530.0,259.5 L 540.0,260.5 L 550.0,254.2 L 560.0,213.1 L 570.0,236.4 L 580.0,223.4 L 590.0,197.3 L 600.0,197.2 L 610.0,217.4 L 620.0,215.7 L 630.0,250.4 L 640.0,271.5 L 650.0,230.8 L 660.0,270.0 L 670.0,274.0 L 680.0,271.4 L 690.0,224.2 L 700.0,212.6 L 710.0,213.1 L 720.0,210.7 L 730.0,211.3 L 740.0,244.9 L 750.0,267.0 L 760.0,262.2 L 770.0,233.4 L 780.0,247.2 L 790.0,259.0 L 800.0,201.8 L 810.0,247.8 L 820.0,267.8 L 830.0,257.6 L 840.0,255.0 L 850.0,233.2 L 860.0,209.3 L 870.0,258.1 L 880.0,221.6 L 890.0,259.1 L 900.0,272.7 L 910.0,226.7 L 920.0,227.1 L 930.0,270.7 L 940.0,253.0 L 950.0,208.6 L 960.0,205.2 L 970.0,207.1 L 980.0,267.4 L 990.0,259.5 L 1000.0,206.7 L 1010.0,261.1 L 1020.0,273.4 L 1030.0,247.6 L 1040.0,223.0 L 1050.0,238.9 L 1060.0,205.5 L 1070.0,196.1 L 1080.0,272.7 L 1090.0,247.0 L 1100.0,237.1 L 1110.0,269.7 L 1120.0,229.7 L 1130.0,264.7 L 1140.0,261.1 L 1150.0,211.9 L 1160.0,215.1 L 1170.0,218.4 L 1180.0,214.2 L 1190.0,241.9 L 1200.0,215.7 L 1210.0,228.5 L 1220.0,205.5 L 1230.0,267.8 L 1240.0,223.3 L 1250.0,231.7 L 1260.0,241.7 L 1270.0,267.3 L 1280.0,228.7 L 1290.0,268.4 L 1300.0,235.1 L 1310.0,237.5 L 1320.0,236.9 L 1330.0,196.5 L 1340.0,230.2 L 1350.0,209.6 L 1360.0,195.3 L 1370.0,258.9 L 1380.0,208.8 L 1390.0,232.9 L 1400.0,253.0 L 1410.0,239.5 L 1420.0,221.1 L 1430.0,236.5 L 1440.0,239.4 L 1450.0,257.7 L 1460.0,203.5 L 1470.0,239.8 L 1480.0,214.9 L 1490.0,217.2 L 1500.0,256.8 L 1510.0,235.6 L 1520.0,239.9 L 1530.0,255.8 L 1540.0,268.0 L 1550.0,230.5 L 1560.0,244.0 L 1570.0,235.4 L 1580.0,236.0 L 1590.0,250.4 L 1600.0,231.2 L 1610.0,237.7 L 1620.0,233.2 L 1620,500 Z" fill="#241206"/>
+      </svg>
+      <div class="hero-bg-fade"></div>
+    </div>
+  <div class="hero-content">
+    <div class="hero-badge">Ueberproduktion &middot; Grosshandel direkt ab Hof</div>
+    <h1>Ueberproduktion<br>im Grosshandel beziehen</h1>
+    <p>Landwirte bieten überschüssige Ernte in grossen Mengen zum Grosshandelspreis an. Mindestabnahmemenge beachten – Angebote richten sich an gewerbliche Abnehmer.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="openOfferModal()">Angebot einstellen</button>
+      <button class="btn-outline" onclick="document.getElementById('markt').scrollIntoView({behavior:'smooth'})">Angebote ansehen</button>
+    </div>
+  </div>
+</header>
+
+<!-- SEARCH -->
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="Produkt oder Hof suchen, z.B. Kartoffeln, Dinkelmehl…" oninput="filterCards()">
+  <button onclick="filterCards()">Suchen</button>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="markt">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h3>Postleitzahl</h3>
+    <input type="text" class="filter-input" id="plzFilter" placeholder="z.B. 74 oder 74078" maxlength="5" oninput="filterCards()">
+
+    <h3>Produktgruppe</h3>
+    <div class="cat-item active" onclick="setCategory(this,'')">Alle Produktgruppen <span class="cat-count">12</span></div>
+    <div class="cat-item" onclick="setCategory(this,'gemüse')">🥦 Gemüse <span class="cat-count">5</span></div>
+    <div class="cat-item" onclick="setCategory(this,'obst')">🍎 Obst <span class="cat-count">2</span></div>
+    <div class="cat-item" onclick="setCategory(this,'getreide')">🌾 Getreide <span class="cat-count">1</span></div>
+    <div class="cat-item" onclick="setCategory(this,'milch')">🥛 Milch & Käse <span class="cat-count">2</span></div>
+    <div class="cat-item" onclick="setCategory(this,'eier')">🥚 Eier <span class="cat-count">1</span></div>
+    <div class="cat-item" onclick="setCategory(this,'honig')">🍯 Honig <span class="cat-count">1</span></div>
+
+    <h3>Menge (verfügbar ab)</h3>
+    <select class="filter-select" id="qtyFilter" onchange="filterCards()">
+      <option value="0">Beliebig</option>
+      <option value="500">ab 500</option>
+      <option value="2000">ab 2.000</option>
+      <option value="10000">ab 10.000</option>
+      <option value="20000">ab 20.000</option>
+    </select>
+
+    <h3>Lieferbedingungen</h3>
+    <select class="filter-select" id="deliveryFilter" onchange="filterCards()">
+      <option value="">Alle</option>
+      <option value="Frei Haus">Frei Haus</option>
+      <option value="Abholung">Abholung</option>
+    </select>
+
+    <h3>Zahlungsmöglichkeiten</h3>
+    <select class="filter-select" id="paymentFilter" onchange="filterCards()">
+      <option value="">Alle</option>
+      <option value="Rechnung">Rechnung</option>
+      <option value="Vorkasse">Vorkasse</option>
+      <option value="Überweisung">Überweisung</option>
+      <option value="Bar">Bar bei Abholung</option>
+      <option value="Kreditkarte">Kreditkarte</option>
+    </select>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="content-header">
+      <h2>Aktuelle Grosshandelsangebote</h2>
+      <select class="sort-select" id="sortSelect" onchange="filterCards()">
+        <option value="newest">Neueste zuerst</option>
+        <option value="price_asc">Günstigste zuerst</option>
+        <option value="price_desc">Teuerste zuerst</option>
+        <option value="qty_desc">Grösste Menge zuerst</option>
+      </select>
+    </div>
+    <div class="grid" id="productGrid"></div>
+  </main>
+</div>
+
+<!-- ANGEBOT EINSTELLEN -->
+<div class="form-toggle" id="anbieten">
+  <p>Bauer oder Landwirt? Biete deine Überproduktion im Grosshandel an!</p>
+  <button class="btn-primary" onclick="openOfferModal()">+ Angebot einstellen</button>
+</div>
+
+<div class="modal-overlay" id="offerModal" onclick="if(event.target===this)closeOfferModal()">
+  <div class="modal" id="offerForm" style="max-width:640px">
+    <button class="modal-close" onclick="closeOfferModal()">✕</button>
+    <h2 id="offerModalTitle">Neues Grosshandelsangebot erstellen</h2>
+    <input type="hidden" id="f-edit-id" value="">
+  <div class="form-grid">
+    <div class="form-field"><label>Produktname *</label><input type="text" id="f-name" placeholder="z.B. Kartoffeln festkochend"></div>
+    <div class="form-field"><label>Produktgruppe *</label>
+      <select id="f-cat">
+        <option>Gemüse</option><option>Obst</option><option>Getreide</option>
+        <option>Milch & Käse</option><option>Eier</option><option>Honig</option>
+      </select>
+    </div>
+    <div class="form-field"><label>Einheit *</label>
+      <select id="f-unit" onchange="toggleCustomUnit()">
+        <option value="kg">kg</option>
+        <option value="Stk">Stk</option>
+        <option value="Liter">Liter</option>
+        <option value="custom">Andere (selbst eingeben)</option>
+      </select>
+      <input type="text" id="f-unit-custom" placeholder="z.B. Palette" style="display:none;margin-top:6px">
+    </div>
+    <div class="form-field"><label>Mindestabnahmemenge *</label><input type="number" id="f-minorder" placeholder="z.B. 500"></div>
+    <div class="form-field"><label>Gesamt verfügbare Menge *</label><input type="number" id="f-qty" placeholder="z.B. 20000"></div>
+    <div class="form-field"><label>Preis pro Einheit (€) *</label><input type="number" step="0.01" id="f-price" placeholder="z.B. 0.35"></div>
+    <div class="form-field"><label>Hofname *</label><input type="text" id="f-farm" placeholder="Musterhof Maier"></div>
+    <div class="form-field"><label>Postleitzahl *</label><input type="text" id="f-plz" placeholder="z.B. 74078" maxlength="5"></div>
+    <div class="form-field"><label>Zertifizierung</label>
+      <select id="f-cert">
+        <option>Konventionell</option><option>Bio (EU)</option><option>Demeter</option><option>Naturland</option><option>IP-Suisse</option><option>Bio-Suisse</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-grid">
+    <div class="form-field">
+      <label>Lieferbedingungen *</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="f-del-haus"> Frei Haus</label>
+        <label><input type="checkbox" id="f-del-abholung" checked> Abholung</label>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Zahlungsmöglichkeiten *</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="f-pay-rechnung" checked> Rechnung</label>
+        <label><input type="checkbox" id="f-pay-vorkasse"> Vorkasse</label>
+        <label><input type="checkbox" id="f-pay-ueberweisung"> Überweisung</label>
+        <label><input type="checkbox" id="f-pay-bar"> Bar</label>
+        <label><input type="checkbox" id="f-pay-kreditkarte"> Kreditkarte</label>
+      </div>
+    </div>
+  </div>
+  <div class="form-field" style="margin-bottom:14px">
+    <label>Produktbilder</label>
+    <input type="file" id="f-images" accept="image/*" multiple onchange="handleImageUpload(event)">
+    <div id="imagePreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+  </div>
+  <div class="form-field" style="margin-bottom:14px">
+    <label>Beschreibung</label>
+    <textarea id="f-desc" placeholder="Erntejahr, Anbauweise, Besonderheiten, Verpackungseinheiten…"></textarea>
+  </div>
+  <div class="form-grid">
+    <div class="form-field"><label>Kontakt (Telefon oder E-Mail) *</label><input type="text" id="f-contact" placeholder="Ihre Kontaktdaten"></div>
+  </div>
+  <button class="submit-btn" id="offerSubmitBtn" onclick="submitOffer()">Angebot veröffentlichen</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- FOOTER -->
+<footer>
+  <p>🌱 Ueberproduktion – Grosshandel direkt vom Hof &nbsp;|&nbsp; <a href="#">Kontakt</a> &nbsp;|&nbsp; <a href="#">Impressum</a> &nbsp;|&nbsp; <a href="#">Datenschutz</a></p>
+  <p style="margin-top:.5rem;opacity:.7">Plattform für gewerbliche Direktvermarktung landwirtschaftlicher Überproduktion</p>
+</footer>
+
+<script>
+  // qty/minOrder sind rein numerisch (unabhängig von unit) für Filter/Sortierung
+  const products = [
+    { id:1, emoji:'🥔', title:'Kartoffeln festkochend', farm:'Biohof Maier', price:0.35, unit:'kg', minOrder:500, totalQty:24000, plz:'85354', cat:'gemüse', bio:true, delivery:['Frei Haus','Abholung'], payment:['Rechnung','Überweisung'], desc:'Frisch geerntete Speisekartoffeln der Sorte Linda, palettenweise verfügbar. Ideal für Grossküchen und Handel. Sehr geringe Schäden, erste Wahl.' },
+    { id:2, emoji:'🍅', title:'Rispentomaten', farm:'Gärtnerei Sonnenschein', price:0.90, unit:'kg', minOrder:200, totalQty:8000, plz:'74078', cat:'gemüse', bio:false, delivery:['Abholung'], payment:['Rechnung','Vorkasse','Kreditkarte'], desc:'Vollreife Rispentomaten aus dem Gewächshaus, kistenweise. Süsslich-würziger Geschmack. Für Weiterverarbeitung oder Grosshandel geeignet.' },
+    { id:3, emoji:'🍎', title:'Äpfel Boskop', farm:'Obstgut Schneider', price:0.45, unit:'kg', minOrder:1000, totalQty:45000, plz:'84036', cat:'obst', bio:false, delivery:['Frei Haus','Abholung'], payment:['Rechnung','Überweisung','Bar'], desc:'Klassischer Boskop, leicht säuerlich, grosse Erntemengen. Hervorragend zum Backen und als Tafelapfel. Lieferung palettiert.' },
+    { id:4, emoji:'🥕', title:'Möhren lose', farm:'Hof Grünwald', price:0.30, unit:'kg', minOrder:500, totalQty:18000, plz:'14476', cat:'gemüse', bio:true, delivery:['Frei Haus'], payment:['Rechnung','Überweisung'], desc:'Zarte Möhren, lose in Grossgebinden, frisch aus dem Boden. Bioanbau ohne Pestizide. Für Handel und Verarbeitung.' },
+    { id:5, emoji:'🌽', title:'Zuckermais', farm:'Familie Berger', price:0.22, unit:'Stk', minOrder:2000, totalQty:60000, plz:'48231', cat:'gemüse', bio:false, delivery:['Frei Haus','Abholung'], payment:['Rechnung','Vorkasse','Überweisung','Kreditkarte'], desc:'Süsser Zuckermais, erntefrisch, containerweise verfügbar. Für Grosshandel und Konservenindustrie geeignet.' },
+    { id:6, emoji:'🥛', title:'Rohmilch Vollmilch', farm:'Almbauer Hofer', price:0.42, unit:'Liter', minOrder:1000, totalQty:15000, plz:'83115', cat:'milch', bio:false, delivery:['Abholung'], payment:['Rechnung','Überweisung'], desc:'Frische Rohmilch von Weidekühen, wöchentliche Liefermenge. Für Molkereien und Käsereien, Tankabholung möglich.' },
+    { id:7, emoji:'🍯', title:'Blütenhonig', farm:'Imkerei Waldblüte', price:6.20, unit:'Glas', minOrder:50, totalQty:3000, plz:'65183', cat:'honig', bio:true, delivery:['Frei Haus','Abholung'], payment:['Rechnung','Vorkasse','Überweisung','Kreditkarte'], desc:'Heller Frühjahrshonig, kalt geschleudert, unbehandelt. 500g-Gläser, palettenweise für Handel und Grossabnehmer.' },
+    { id:8, emoji:'🥚', title:'Freilandeier', farm:'Hühnerhof Roth', price:2.60, unit:'10er', minOrder:500, totalQty:12000, plz:'31860', cat:'eier', bio:false, delivery:['Frei Haus','Abholung'], payment:['Rechnung','Überweisung'], desc:'Eier von freilaufenden Hühnern, Klasse A, wöchentliche Grosslieferung. Für Grossküchen, Bäckereien und Handel.' },
+    { id:9, emoji:'🌾', title:'Dinkelmehl Type 630', farm:'Mühle am Bach', price:0.95, unit:'kg', minOrder:1000, totalQty:20000, plz:'74206', cat:'getreide', bio:true, delivery:['Frei Haus'], payment:['Rechnung','Vorkasse','Überweisung'], desc:'Fein gemahlenes Dinkelmehl aus eigenem Anbau, big-bag oder Sackware. Backtauglich, nussiger Geschmack, für Bäckereien.' },
+    { id:10, emoji:'🫑', title:'Spitzpaprika gemischt', farm:'Gärtnerei Sonnenschein', price:1.30, unit:'kg', minOrder:300, totalQty:6000, plz:'74078', cat:'gemüse', bio:false, delivery:['Abholung'], payment:['Rechnung','Bar'], desc:'Rote, gelbe und orange Spitzpaprika, kistenweise. Sehr süss und aromatisch, integrierter Anbau, für Handel und Gastronomie.' },
+    { id:11, emoji:'🍐', title:'Konferenzbirnen', farm:'Obstgut Schneider', price:0.55, unit:'kg', minOrder:500, totalQty:15000, plz:'84036', cat:'obst', bio:false, delivery:['Frei Haus','Abholung'], payment:['Rechnung','Überweisung','Kreditkarte'], desc:'Saftige Konferenzbirnen, Ernte Oktober, palettenweise verfügbar. Für Grosshandel oder Direktabnahme geeignet.' },
+    { id:12, emoji:'🧀', title:'Weichkäse Hofkäserei', farm:'Almbauer Hofer', price:3.40, unit:'Stk', minOrder:200, totalQty:4000, plz:'83115', cat:'milch', bio:false, delivery:['Abholung'], payment:['Rechnung','Vorkasse','Bar'], desc:'Handgemachter Weichkäse aus Rohmilch, 200g-Laibe, mild-cremig. Kartonweise für Handel und Feinkostvertrieb.' },
+  ];
+
+  let activeCategory = '';
+  let extraOffers = [];
+  let uploadedImages = [];
+  let currentModalImages = [];
+  let orders = [];
+
+  // Gespeicherte eigene Angebote & Bestellungen aus dem Browser laden
+  try {
+    const savedOffers = localStorage.getItem('ueberproduktion_extraOffers');
+    if (savedOffers) extraOffers = JSON.parse(savedOffers);
+  } catch (e) { console.warn('Konnte gespeicherte Angebote nicht laden:', e); }
+  try {
+    const savedOrders = localStorage.getItem('ueberproduktion_orders');
+    if (savedOrders) orders = JSON.parse(savedOrders);
+  } catch (e) { console.warn('Konnte gespeicherte Bestellungen nicht laden:', e); }
+
+  function saveOffersToStorage() {
+    try {
+      localStorage.setItem('ueberproduktion_extraOffers', JSON.stringify(extraOffers));
+    } catch (e) {
+      showToast('Angebot konnte nicht dauerhaft gespeichert werden (Speicherlimit erreicht).');
+    }
+  }
+
+  function saveOrdersToStorage() {
+    try {
+      localStorage.setItem('ueberproduktion_orders', JSON.stringify(orders));
+    } catch (e) { console.warn('Konnte Bestellungen nicht speichern:', e); }
+  }
+
+  // Bekannte Koordinaten je PLZ (Näherungswerte, Basis: OpenStreetMap)
+  const farmCoordinates = {
+    '85354': [48.4041, 11.7492],
+    '74078': [49.1427, 9.2109],
+    '84036': [48.5348, 12.1518],
+    '14476': [52.4125, 13.0116],
+    '48231': [51.9500, 7.9833],
+    '83115': [47.7667, 12.1667],
+    '65183': [50.0782, 8.2398],
+    '31860': [52.0833, 9.3333],
+    '74206': [49.2333, 9.1500],
+  };
+  let farmsMapInstance = null;
+  let farmMarkers = [];
+
+  function toggleFarmsMap() {
+    const panel = document.getElementById('farmsMapPanel');
+    panel.classList.toggle('collapsed');
+    if (!panel.classList.contains('collapsed') && farmsMapInstance) {
+      setTimeout(() => farmsMapInstance.invalidateSize(), 200);
+    }
+  }
+
+  function initFarmsMap() {
+    if (typeof L === 'undefined') {
+      document.getElementById('farmsMap').innerHTML =
+        '<div style="padding:10px;font-size:11px;color:var(--text2)">Karte konnte nicht geladen werden (kein Internetzugriff auf Kartendienst).</div>';
+      return;
+    }
+    farmsMapInstance = L.map('farmsMap', { zoomControl: false, attributionControl: false })
+      .setView([51.0, 10.0], 5.2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(farmsMapInstance);
+    L.control.attribution({ prefix: false, position: 'bottomright' })
+      .addAttribution('&copy; OpenStreetMap')
+      .addTo(farmsMapInstance);
+    refreshFarmMarkers();
+  }
+
+  function addFarmMarker(coord, group) {
+    const marker = L.marker(coord).addTo(farmsMapInstance);
+    marker.bindPopup(`<b>${group.farm}</b><br>PLZ ${group.plz}<br>${group.titles.length} Angebot(e):<br>${group.titles.join(', ')}`);
+    farmMarkers.push(marker);
+  }
+
+  function geocodePlz(plz) {
+    return fetch(`https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(plz)}&format=json&limit=1`)
+      .then(r => r.json())
+      .then(data => (data && data[0]) ? [parseFloat(data[0].lat), parseFloat(data[0].lon)] : null)
+      .catch(() => null);
+  }
+
+  function refreshFarmMarkers() {
+    if (!farmsMapInstance) return;
+    farmMarkers.forEach(m => farmsMapInstance.removeLayer(m));
+    farmMarkers = [];
+    const all = [...products, ...extraOffers];
+    const groups = {};
+    all.forEach(p => {
+      if (!p.plz) return;
+      if (!groups[p.plz]) groups[p.plz] = { farm: p.farm, plz: p.plz, titles: [] };
+      groups[p.plz].titles.push(p.title);
+    });
+    Object.values(groups).forEach(g => {
+      const coord = farmCoordinates[g.plz];
+      if (coord) {
+        addFarmMarker(coord, g);
+      } else {
+        geocodePlz(g.plz).then(c => {
+          if (c) { farmCoordinates[g.plz] = c; addFarmMarker(c, g); }
+        });
+      }
+    });
+  }
+
+  function setCategory(el, cat) {
+    document.querySelectorAll('.cat-item').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    activeCategory = cat;
+    filterCards();
+  }
+
+  function filterCards() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const plz = document.getElementById('plzFilter').value.trim();
+    const minQty = parseFloat(document.getElementById('qtyFilter').value) || 0;
+    const delivery = document.getElementById('deliveryFilter').value;
+    const payment = document.getElementById('paymentFilter').value;
+    const sort = document.getElementById('sortSelect').value;
+
+    let all = [...products, ...extraOffers];
+    let filtered = all.filter(p => {
+      const matchQ = !q || p.title.toLowerCase().includes(q) || p.farm.toLowerCase().includes(q);
+      const matchC = !activeCategory || p.cat === activeCategory;
+      const matchPlz = !plz || p.plz.startsWith(plz);
+      const matchQty = p.totalQty >= minQty;
+      const matchDelivery = !delivery || p.delivery.includes(delivery);
+      const matchPayment = !payment || p.payment.includes(payment);
+      return matchQ && matchC && matchPlz && matchQty && matchDelivery && matchPayment;
+    });
+
+    if (sort === 'price_asc') filtered.sort((a,b) => a.price - b.price);
+    else if (sort === 'price_desc') filtered.sort((a,b) => b.price - a.price);
+    else if (sort === 'qty_desc') filtered.sort((a,b) => b.totalQty - a.totalQty);
+
+    renderCards(filtered);
+  }
+
+  function fmt(n) { return n.toLocaleString('de-DE'); }
+
+  function renderCards(list) {
+    const g = document.getElementById('productGrid');
+    if (list.length === 0) {
+      g.innerHTML = '<p class="empty-state">Keine Angebote gefunden. Versuche andere Filter.</p>';
+      return;
+    }
+    g.innerHTML = list.map(p => `
+      <div class="card" onclick="openModal(${p.id})">
+        <div class="card-img">${p.images && p.images.length ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover">` : p.emoji}
+          ${p.bio ? '<span class="card-badge bio">Bio</span>' : '<span class="card-badge">Direkt</span>'}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${p.title}</div>
+          <div class="card-farm">${p.farm}</div>
+          <div class="card-footer">
+            <div class="card-price">${p.price.toFixed(2)} € <span>/ ${p.unit}</span></div>
+            <div class="card-loc">📍 ${p.plz}</div>
+          </div>
+          <div class="card-qty-row">
+            Mindestabnahme: <b>${fmt(p.minOrder)} ${p.unit}</b><br>
+            Gesamt verfügbar: <b>${fmt(p.totalQty)} ${p.unit}</b>
+          </div>
+          <div class="tag-row">
+            ${p.bio ? '<span class="tag">Bio</span>' : ''}
+            ${extraOffers.some(o => o.id === p.id) ? '<span class="tag amber">👤 Eigenes Angebot</span>' : ''}
+            ${p.delivery.map(d => `<span class="tag amber">${d}</span>`).join('')}
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function openModal(id) {
+    const all = [...products, ...extraOffers];
+    const p = all.find(x => x.id === id);
+    if (!p) return;
+    const isOwn = extraOffers.some(o => o.id === id);
+    currentModalImages = p.images || [];
+    document.getElementById('modalContent').innerHTML = `
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      ${currentModalImages.length ? `
+        <div style="border-radius:10px;overflow:hidden;margin-bottom:.75rem">
+          <img id="modalMainImg" src="${currentModalImages[0]}" style="width:100%;display:block;max-height:260px;object-fit:cover">
+        </div>
+        ${currentModalImages.length > 1 ? `
+          <div style="display:flex;gap:6px;margin-bottom:1rem">
+            ${currentModalImages.map(img => `<img src="${img}" onclick="document.getElementById('modalMainImg').src='${img}'" style="width:50px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;border:0.5px solid var(--border)">`).join('')}
+          </div>` : ''}
+      ` : `<div style="font-size:56px;margin-bottom:.6rem">${p.emoji}</div>`}
+      <h2>${p.title}</h2>
+      <p class="modal-meta">${p.farm} &middot; PLZ ${p.plz}${p.bio ? ' &middot; 🌿 Bio' : ''}${isOwn ? ' &middot; 👤 Eigenes Angebot' : ''}</p>
+      ${isOwn ? `
+        <div class="modal-owner-actions">
+          <button class="btn-modal-edit" onclick="closeModal(); openOfferModal(${p.id})">✏️ Bearbeiten</button>
+          <button class="btn-modal-delete" onclick="deleteOwnOffer(${p.id})">🗑️ Löschen</button>
+        </div>` : ''}
+      <div class="modal-price-row">
+        <div class="modal-price">${p.price.toFixed(2)} € <span>/ ${p.unit}</span></div>
+        <div class="modal-avail">📦 ${fmt(p.totalQty)} ${p.unit} gesamt verfügbar</div>
+      </div>
+      <div class="modal-order-row">
+        <span>📋 Mindestabnahmemenge</span>
+        <span>${fmt(p.minOrder)} ${p.unit}</span>
+      </div>
+      <div class="modal-section">
+        <label>Gewünschte Menge (${p.unit})</label>
+        <input type="number" class="filter-input" id="orderQty" min="${p.minOrder}" max="${p.totalQty}" step="1" value="${p.minOrder}" oninput="updateOrderTotal(${p.price}, ${p.minOrder}, ${p.totalQty})">
+        <p class="range-label">Mindestabnahme ${fmt(p.minOrder)} ${p.unit} &middot; maximal ${fmt(p.totalQty)} ${p.unit} verfügbar</p>
+        <div class="modal-price-row" style="margin-top:8px">
+          <div style="font-size:13px;color:#3B6D11;font-weight:500">Gesamtpreis</div>
+          <div class="modal-price" id="orderTotal">${(p.minOrder * p.price).toFixed(2).replace('.', ',')} €</div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <label>Beschreibung</label>
+        <p>${p.desc}</p>
+      </div>
+      <div class="modal-section">
+        <label>Lieferbedingungen</label>
+        <div class="tag-row">${p.delivery.map(d => `<span class="tag amber">${d}</span>`).join('')}</div>
+      </div>
+      <div class="modal-section">
+        <label>Zahlungsmöglichkeiten</label>
+        <div class="tag-row">${p.payment.map(pay => `<span class="tag">${pay}</span>`).join('')}</div>
+      </div>
+      <div class="modal-section">
+        <label>Zahlungsart wählen</label>
+        <select class="filter-select" id="paySelect" onchange="onPaySelectChange()">
+          <option value="">Bitte wählen</option>
+          ${p.payment.map(pay => `<option value="${pay}">${pay}</option>`).join('')}
+        </select>
+        <div id="payDetails"></div>
+      </div>
+      ${p.contact ? `<div class="modal-section"><label>Kontakt</label><p>${p.contact}</p></div>` : ''}
+      <button class="btn-contact" onclick="handleContact(${p.minOrder}, ${p.totalQty}, '${p.unit}', ${JSON.stringify(p.title)}, ${JSON.stringify(p.farm)}, ${p.price})">Bauer kontaktieren</button>`;
+    document.getElementById('modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function onPaySelectChange() {
+    const val = document.getElementById('paySelect').value;
+    const c = document.getElementById('payDetails');
+    if (val === 'Kreditkarte') {
+      c.innerHTML = `
+        <div class="form-grid" style="margin-top:10px">
+          <div class="form-field"><label>Name auf Karte</label><input type="text" id="cc-name" placeholder="Max Mustermann"></div>
+          <div class="form-field"><label>Kartennummer</label><input type="text" id="cc-number" placeholder="1234 5678 9012 3456" maxlength="19"></div>
+          <div class="form-field"><label>Verfallsdatum</label><input type="text" id="cc-expiry" placeholder="MM/JJ" maxlength="5"></div>
+          <div class="form-field"><label>CVV</label><input type="text" id="cc-cvv" placeholder="123" maxlength="4"></div>
+        </div>`;
+    } else if (val === 'Überweisung' || val === 'Vorkasse') {
+      c.innerHTML = `
+        <div class="form-grid" style="margin-top:10px">
+          <div class="form-field"><label>Postleitzahl</label><input type="text" id="acc-plz" placeholder="z.B. 74078" maxlength="10"></div>
+          <div class="form-field"><label>Land</label><input type="text" id="acc-land" placeholder="z.B. Deutschland"></div>
+        </div>`;
+    } else {
+      c.innerHTML = '';
+    }
+  }
+
+  function updateOrderTotal(price, minOrder, totalQty) {
+    const input = document.getElementById('orderQty');
+    const qty = parseFloat(input.value) || 0;
+    document.getElementById('orderTotal').textContent = (qty * price).toFixed(2).replace('.', ',') + ' €';
+    if (qty < minOrder || qty > totalQty) {
+      input.classList.add('input-error');
+    } else {
+      input.classList.remove('input-error');
+    }
+  }
+
+  function handleContact(minOrder, totalQty, unit, title, farm, price) {
+    const input = document.getElementById('orderQty');
+    const qty = parseFloat(input.value) || 0;
+    if (qty < minOrder || qty > totalQty) {
+      input.classList.add('input-error');
+    }
+    if (qty < minOrder) {
+      showToast(`Menge muss mindestens ${fmt(minOrder)} ${unit} betragen.`);
+      return;
+    }
+    if (qty > totalQty) {
+      showToast(`Menge darf maximal ${fmt(totalQty)} ${unit} betragen.`);
+      return;
+    }
+    const paySelect = document.getElementById('paySelect');
+    const payment = paySelect ? paySelect.value : '';
+    orders.push({
+      title, farm, qty, unit, total: qty * price, payment,
+      time: new Date().toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
+    });
+    updateOrdersBadge();
+    saveOrdersToStorage();
+    showToast(`Anfrage über ${fmt(qty)} ${unit} gesendet! Der Bauer meldet sich bei Ihnen.`);
+    closeModal();
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeOfferModal(); closeOrdersModal(); closeInfoModal(); } });
+
+  function handleImageUpload(event) {
+    const files = Array.from(event.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        uploadedImages.push(e.target.result);
+        renderImagePreview();
+      };
+      reader.readAsDataURL(file);
+    });
+    event.target.value = '';
+  }
+
+  function renderImagePreview() {
+    const c = document.getElementById('imagePreview');
+    c.innerHTML = uploadedImages.map((img, i) => `
+      <div style="position:relative;width:64px;height:64px">
+        <img src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;border:0.5px solid var(--border)">
+        <button type="button" onclick="removeUploadedImage(${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:#c0392b;color:#fff;font-size:11px;line-height:1;cursor:pointer">✕</button>
+      </div>`).join('');
+  }
+
+  function removeUploadedImage(i) {
+    uploadedImages.splice(i, 1);
+    renderImagePreview();
+  }
+
+  function toggleCustomUnit() {
+    const isCustom = document.getElementById('f-unit').value === 'custom';
+    document.getElementById('f-unit-custom').style.display = isCustom ? 'block' : 'none';
+  }
+
+  function openInfoModal() {
+    document.getElementById('infoModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeInfoModal() {
+    document.getElementById('infoModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function openOrdersModal() {
+    renderOrdersList();
+    document.getElementById('ordersModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeOrdersModal() {
+    document.getElementById('ordersModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function renderOrdersList() {
+    const c = document.getElementById('ordersList');
+    if (orders.length === 0) {
+      c.innerHTML = '<p style="color:var(--text2);font-size:14px">Noch keine Bestellungen abgegeben.</p>';
+      return;
+    }
+    c.innerHTML = orders.slice().reverse().map(o => `
+      <div class="order-item">
+        <div class="order-item-top">
+          <div>
+            <div class="order-item-title">${o.title}</div>
+            <div class="order-item-farm">${o.farm}</div>
+          </div>
+          <div class="order-item-time">${o.time}</div>
+        </div>
+        <div class="order-item-details">
+          Menge: <b>${fmt(o.qty)} ${o.unit}</b><br>
+          Gesamtpreis: <b>${o.total.toFixed(2).replace('.', ',')} €</b><br>
+          Zahlungsart: <b>${o.payment || 'nicht angegeben'}</b>
+        </div>
+      </div>`).join('');
+  }
+
+  function updateOrdersBadge() {
+    const badge = document.getElementById('ordersBadge');
+    if (orders.length > 0) {
+      badge.style.display = 'flex';
+      badge.textContent = orders.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  const catLabelMap = { 'gemüse':'Gemüse','obst':'Obst','getreide':'Getreide','milch':'Milch & Käse','eier':'Eier','honig':'Honig' };
+
+  function resetOfferForm() {
+    document.getElementById('f-edit-id').value = '';
+    ['f-name','f-farm','f-minorder','f-qty','f-price','f-plz','f-contact','f-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-cat').value = 'Gemüse';
+    document.getElementById('f-cert').value = 'Konventionell';
+    document.getElementById('f-unit').value = 'kg';
+    document.getElementById('f-unit-custom').value = '';
+    toggleCustomUnit();
+    document.getElementById('f-del-haus').checked = false;
+    document.getElementById('f-del-abholung').checked = true;
+    document.getElementById('f-pay-rechnung').checked = true;
+    document.getElementById('f-pay-vorkasse').checked = false;
+    document.getElementById('f-pay-ueberweisung').checked = false;
+    document.getElementById('f-pay-bar').checked = false;
+    document.getElementById('f-pay-kreditkarte').checked = false;
+    uploadedImages = [];
+    renderImagePreview();
+  }
+
+  function openOfferModal(editId) {
+    if (editId) {
+      const offer = extraOffers.find(o => o.id === editId);
+      if (!offer) return;
+      document.getElementById('f-edit-id').value = offer.id;
+      document.getElementById('f-name').value = offer.title;
+      document.getElementById('f-farm').value = offer.farm;
+      document.getElementById('f-cat').value = catLabelMap[offer.cat] || 'Gemüse';
+      document.getElementById('f-cert').value = offer.cert || (offer.bio ? 'Bio (EU)' : 'Konventionell');
+      if (['kg','Stk','Liter'].includes(offer.unit)) {
+        document.getElementById('f-unit').value = offer.unit;
+        document.getElementById('f-unit-custom').value = '';
+      } else {
+        document.getElementById('f-unit').value = 'custom';
+        document.getElementById('f-unit-custom').value = offer.unit;
+      }
+      toggleCustomUnit();
+      document.getElementById('f-minorder').value = offer.minOrder;
+      document.getElementById('f-qty').value = offer.totalQty;
+      document.getElementById('f-price').value = offer.price;
+      document.getElementById('f-plz').value = offer.plz;
+      document.getElementById('f-del-haus').checked = offer.delivery.includes('Frei Haus');
+      document.getElementById('f-del-abholung').checked = offer.delivery.includes('Abholung');
+      document.getElementById('f-pay-rechnung').checked = offer.payment.includes('Rechnung');
+      document.getElementById('f-pay-vorkasse').checked = offer.payment.includes('Vorkasse');
+      document.getElementById('f-pay-ueberweisung').checked = offer.payment.includes('Überweisung');
+      document.getElementById('f-pay-bar').checked = offer.payment.includes('Bar');
+      document.getElementById('f-pay-kreditkarte').checked = offer.payment.includes('Kreditkarte');
+      document.getElementById('f-desc').value = offer.desc || '';
+      document.getElementById('f-contact').value = offer.contact || '';
+      uploadedImages = offer.images ? [...offer.images] : [];
+      renderImagePreview();
+      document.getElementById('offerModalTitle').textContent = 'Angebot bearbeiten';
+      document.getElementById('offerSubmitBtn').textContent = 'Änderungen speichern';
+    } else {
+      resetOfferForm();
+      document.getElementById('offerModalTitle').textContent = 'Neues Grosshandelsangebot erstellen';
+      document.getElementById('offerSubmitBtn').textContent = 'Angebot veröffentlichen';
+    }
+    document.getElementById('offerModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeOfferModal() {
+    document.getElementById('offerModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function deleteOwnOffer(id) {
+    if (!confirm('Dieses Angebot wirklich löschen?')) return;
+    extraOffers = extraOffers.filter(o => o.id !== id);
+    saveOffersToStorage();
+    closeModal();
+    filterCards();
+    refreshFarmMarkers();
+    showToast('Angebot gelöscht.');
+  }
+
+  function submitOffer() {
+    const name = document.getElementById('f-name').value.trim();
+    const farm = document.getElementById('f-farm').value.trim();
+    const minOrderRaw = document.getElementById('f-minorder').value.trim();
+    const qtyRaw = document.getElementById('f-qty').value.trim();
+    const priceRaw = document.getElementById('f-price').value.trim();
+    const plz = document.getElementById('f-plz').value.trim();
+    const contact = document.getElementById('f-contact').value.trim();
+
+    if (!name || !farm || !minOrderRaw || !qtyRaw || !priceRaw || !plz || !contact) {
+      showToast('Bitte alle Pflichtfelder (*) ausfüllen.');
+      return;
+    }
+
+    const delivery = [];
+    if (document.getElementById('f-del-haus').checked) delivery.push('Frei Haus');
+    if (document.getElementById('f-del-abholung').checked) delivery.push('Abholung');
+    if (delivery.length === 0) {
+      showToast('Bitte mindestens eine Lieferbedingung wählen.');
+      return;
+    }
+
+    const payment = [];
+    if (document.getElementById('f-pay-rechnung').checked) payment.push('Rechnung');
+    if (document.getElementById('f-pay-vorkasse').checked) payment.push('Vorkasse');
+    if (document.getElementById('f-pay-ueberweisung').checked) payment.push('Überweisung');
+    if (document.getElementById('f-pay-bar').checked) payment.push('Bar');
+    if (document.getElementById('f-pay-kreditkarte').checked) payment.push('Kreditkarte');
+    if (payment.length === 0) {
+      showToast('Bitte mindestens eine Zahlungsmöglichkeit wählen.');
+      return;
+    }
+
+    const catMap = { 'Gemüse':'gemüse','Obst':'obst','Getreide':'getreide','Milch & Käse':'milch','Eier':'eier','Honig':'honig' };
+    const emojiMap = { 'gemüse':'🥬','obst':'🍇','getreide':'🌾','milch':'🥛','eier':'🥚','honig':'🍯' };
+    const catLabel = document.getElementById('f-cat').value;
+    const cat = catMap[catLabel];
+    const cert = document.getElementById('f-cert').value;
+    const bio = cert !== 'Konventionell';
+    const priceNum = parseFloat(priceRaw.replace(',', '.')) || 0;
+    const unitSelect = document.getElementById('f-unit').value;
+    const unit = unitSelect === 'custom' ? document.getElementById('f-unit-custom').value.trim() : unitSelect;
+    if (!unit) {
+      showToast('Bitte eine Einheit angeben.');
+      return;
+    }
+    const minOrderNum = parseFloat(minOrderRaw.replace(',', '.')) || 0;
+    const qtyNum = parseFloat(qtyRaw.replace(',', '.')) || 0;
+
+    const offerData = {
+      emoji: emojiMap[cat] || '🌿',
+      title: name,
+      farm: farm,
+      price: priceNum,
+      unit: unit,
+      minOrder: minOrderNum,
+      totalQty: qtyNum,
+      plz: plz,
+      cat: cat,
+      cert: cert,
+      bio: bio,
+      delivery: delivery,
+      payment: payment,
+      desc: document.getElementById('f-desc').value || 'Keine Beschreibung angegeben.',
+      contact: contact,
+      images: [...uploadedImages],
+    };
+
+    const editId = document.getElementById('f-edit-id').value;
+    let toastMsg = '✓ Angebot wurde veröffentlicht!';
+    if (editId) {
+      const idx = extraOffers.findIndex(o => o.id === Number(editId));
+      if (idx !== -1) {
+        extraOffers[idx] = { ...extraOffers[idx], ...offerData };
+        toastMsg = '✓ Änderungen gespeichert!';
+      }
+    } else {
+      extraOffers.push({ id: Date.now(), ...offerData });
+    }
+    saveOffersToStorage();
+
+    closeOfferModal();
+    resetOfferForm();
+    filterCards();
+    refreshFarmMarkers();
+    showToast(toastMsg);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  filterCards();
+  initFarmsMap();
+  updateOrdersBadge();
+</script>
+</body>
+</html>
